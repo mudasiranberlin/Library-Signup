@@ -53,5 +53,44 @@ write in file :
 .env.*
 **/node_modules
 
-12. 
+12. install : npm i mongoose express dotenv 
+13. save PORT AND MONGODBURL in .env
+14. constant.js = write there :export const DB_NAME = "videotube"
+15. go to : index.js and we will connect connect db 
+-> try catch wrap or promise 
+-> Use another continent db take time so use : so use async and await use
+
+
+import mongoose from "mongoose";
+import { DB_NAME } from "../constant.js";
+
+
+const connectDB = async () => {
+    try {
+        const connectionInstance = await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`);
+        console.log(`\n MongoDB Application Connected !! DB HOST: ${connectionInstance.connection.host}`);
+        
+    } catch (error) {
+        console.log("MONGODB CONNECTION ERROR",error);
+        process.exit(1)        
+    }
+}
+export default connectDB
+
+15. setup .env
+
+16. Now go to index.js
+write
+import dotenv from "dotenv"
+dotenv.config({
+    path:'./.env'
+})
+and go to package json and write there : "scripts": {
+    "dev": "nodemon src -r dotenv/config --experimental-json-modules /index.js"
+  },
+
+or if you dont want to use that : require('dotenv').config({path:'./env'})
+
+
+connectDB()
 
