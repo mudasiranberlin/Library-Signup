@@ -19,6 +19,39 @@ copy and paste in gitingore file
     "dev": "nodemon src/index.js" //index is the file we created
   },
 dev dependicy = use in writing code but not use production
-9.   
+9.  mkdir controller db middleware models routes utils
+controllers = functionality
+db =connection logic
+middleware = run in between eg verfify user
+models = project structure
+routes = navigation
+utils = file upload, mailing, repating actions
 
+10. now install prettier =. npm i prettier // you can ingore also this 
+create file in main and name it as :  .prettierrc
+{
+  "singleQuote": true,
+  "semi": true,
+  "bracketSpacing":true,
+  "tabWidth": 2,
+  "trailingComma": "es5"
+}
+
+semi: Add a semicolon at the end of statements (true or false).
+singleQuote: Use single quotes instead of double quotes (true or false).
+tabWidth: Set space count for indentation (e.g., 2).
+trailingComma: Add trailing commas where valid (all, es5, or none).
+printWidth: Set maximum line length before wrapping (e.g., 80 or 100)
+
+11. igore prettier  create file = touch  .prettierignore
+write in file : 
+/.vscode
+/node_modules
+./dist
+*.env
+.env
+.env.*
+**/node_modules
+
+12. 
 
