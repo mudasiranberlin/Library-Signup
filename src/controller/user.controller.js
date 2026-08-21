@@ -10,17 +10,27 @@ import {upload} from "../middleware/multer.middleware.js"
 
 const generateAccessAndRefereshTokens = async(userId) =>{
     try {
+        console.log("RefreshToken",userId);
+        
         const user = await User.findById(userId)
+        console.log("user",user);
+        
         const accessToken = user.generateAccessToken()
+        
+        
         const refreshToken = user.generateRefreshToken()
+        
 
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
+
+        
 
         return {accessToken, refreshToken}
 
 
     } catch (error) {
+        console.log("TOKEN ERROR:", error);
         throw new ApiError(500, "Something went wrong while generating referesh and access token")
     }
 }
@@ -107,6 +117,9 @@ const loginUser = asyncHandler(async (req, res) =>{
     //access and referesh token
     //send cookie
 
+    console.log("Mudasir");
+    
+
     const {email, username, password} = req.body
     console.log(email);
 
@@ -133,8 +146,14 @@ const loginUser = asyncHandler(async (req, res) =>{
    if (!isPasswordValid) {
     throw new ApiError(401, "Invalid user credentials")
     }
+    console.log("here",user._id);
 
+    
+    
    const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(user._id)
+
+   console.log("accesstoken",accessToken);
+   console.log("Refresh token",refreshToken);
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
