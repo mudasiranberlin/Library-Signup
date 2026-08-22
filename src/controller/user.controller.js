@@ -7,10 +7,8 @@ import jwt from "jsonwebtoken"
 import mongoose from "mongoose";
 import { upload } from "../middleware/multer.middleware.js"
 
-function generatotp() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
+import generateOtp from "../utility/generateOtp.js";
+import sendEmail from "../utility/sendEmail.utility.js";
 
 const generateAccessAndRefereshTokens = async (userId) => {
     try {
@@ -45,6 +43,13 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const { fullName, email, username, password } = req.body
     //console.log("email: ", email);
+
+    const otp = generateOtp();
+    if (!otp) {
+        throw new ApiError(400, "Something went wrong")
+    }
+    console.log("otp",otp);
+    
 
     if (
         [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -98,9 +103,17 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImage: coverImage?.url || "",
         email,
         password,
-        username: username.toLowerCase()
+        username: username.toLowerCase(),
+        isVerified: false,
+        verifyOtp: otp,
+        verifyOtpExpiry: new Date(Date.now() + 5 * 60 * 1000),
     })
-
+     await sendEmail({
+        to: email,
+        subject: "Verify your email",
+        text: `Your verification OTP is ${otp}`,
+        html: `<h2>Your verification OTP is: ${otp}</h2>`,
+    });
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
@@ -110,7 +123,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     return res.status(201).json(
-        new ApiResponse(200, createdUser, "User registered Successfully")
+        new ApiResponse(200, createdUser, "User registered Successfully and  OTP sent to your email.")
     )
 
 })
@@ -140,6 +153,13 @@ const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({
         $or: [{ username }, { email }]
     })
+
+    if (!user.isVerified) {
+    throw new ApiError(
+        403,
+        "Please verify your email before logging in"
+    );
+}
 
     if (!user) {
         throw new ApiError(404, "User does not exist")
@@ -500,76 +520,122 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         )
 })
 
-// const sendOtp = asyncHandler(async (req, res) => {
-//     const { email } = req.body;
+const verifyEmail = asyncHandler(async (req, res) => {
+    const { email, otp } = req.body;
 
-//     const user = await User.findOne({ email });
+    if (!email || !otp) {
+        throw new ApiError(
+            400,
+            "Email and OTP are required"
+        );
+    }
 
-//     if (!user) {
-//         throw new ApiError(404, "User not found");
-//     }
+    const user = await User.findOne({ email });
 
-//     // Send OTP to user's email here
-//     // await sendEmail(email, otp);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
 
-//     const otp = generateOtp();
+    if (user.isVerified) {
+        throw new ApiError(
+            400,
+            "Email is already verified"
+        );
+    }
 
-//     user.resetotp = otp;
-//     user.otpExpiry = Date.now() + 5 * 60 * 1000;
+    if (user.verifyOtp !== otp) {
+        throw new ApiError(
+            400,
+            "Invalid OTP"
+        );
+    }
 
-//     await user.save();
+    if (
+        !user.verifyOtpExpiry ||
+        user.verifyOtpExpiry.getTime() < Date.now()
+    ) {
+        throw new ApiError(
+            400,
+            "OTP expired"
+        );
+    }
 
-//     await sendEmail({
-//         to: email,
-//         subject: "Your OTP",
-//         text: `Your OTP is ${otp}`,
-//         html: `<b>Your OTP is ${otp}</b>`,
-//     });
+    user.isVerified = true;
 
-//     return res
-//         .status(200)
-//         .json(
-//             new ApiResponse(
-//                 200,
-//                 {},
-//                 "OTP sent successfully"
-//             )
-//         );
-// });
+    // Remove OTP after successful verification
+    user.verifyOtp = null;
+    user.verifyOtpExpiry = null;
 
-// const verifyOtp = asyncHandler(async (req, res) => {
-//     const { email, otp } = req.body;
+    await user.save();
 
-//     const user = await User.findOne({ email });
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {},
+            "Email verified successfully"
+        )
+    );
+});
 
-//     if (!user) {
-//         throw new ApiError(404, "User not found");
-//     }
+const resendVerificationOtp = asyncHandler(
+    async (req, res) => {
+        const { email } = req.body;
 
-//     if (user.resetotp !== otp) {
-//         throw new ApiError(400, "Invalid OTP");
-//     }
+        if (!email) {
+            throw new ApiError(
+                400,
+                "Email is required"
+            );
+        }
 
-//     if (user.otpExpiry < Date.now()) {
-//         throw new ApiError(400, "OTP expired");
-//     }
+        const user = await User.findOne({ email });
 
-//     // OTP is valid, so invalidate it
-//     user.resetotp = null;
-//     user.otpExpiry = null;
+        if (!user) {
+            throw new ApiError(
+                404,
+                "User not found"
+            );
+        }
 
-//     await user.save();
+        if (user.isVerified) {
+            throw new ApiError(
+                400,
+                "Email is already verified"
+            );
+        }
 
-//     return res
-//         .status(200)
-//         .json(
-//             new ApiResponse(
-//                 200,
-//                 {},
-//                 "OTP verified successfully"
-//             )
-//         );
-// });
+        const otp = generateOtp();
+
+        user.verifyOtp = otp;
+        user.verifyOtpExpiry = new Date(
+            Date.now() + 5 * 60 * 1000
+        );
+
+        await user.save();
+
+        await sendEmail({
+            to: user.email,
+            subject: "New verification OTP",
+            text: `Your new verification OTP is ${otp}`,
+            html: `
+                <h2>Email Verification</h2>
+                <p>Your new OTP is:</p>
+                <h1>${otp}</h1>
+                <p>This OTP will expire in 5 minutes.</p>
+            `,
+        });
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                {},
+                "New OTP sent successfully"
+            )
+        );
+    }
+);
+
+
 
 export {
     registerUser,
@@ -583,6 +649,6 @@ export {
     updateUserCoverImage,
     getUserChannelProfile,
     getWatchHistory,
-    sendOtp,
-    verifyOtp
+    verifyEmail,
+    resendVerificationOtp,
 }

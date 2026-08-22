@@ -12,7 +12,8 @@ import {
     getUserChannelProfile, 
     getWatchHistory, 
     updateAccountDetails,
-    sendOtp
+    verifyEmail,
+    resendVerificationOtp
 } from "../controller/user.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
 import { verifyJWT } from "../middleware/auth.middleware.js";
@@ -38,7 +39,7 @@ router.route("/login").post(loginUser)
 
 //secured routes
 
-router.route("/sendotp").post(sendOtp)
+router.route("/verifyEmail").post(verifyEmail)
 
 router.route("/logout").post(verifyJWT,  logoutUser)
 router.route("/refresh-token").post(refreshAccessToken)
@@ -51,5 +52,13 @@ router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updat
 
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
 router.route("/history").get(verifyJWT, getWatchHistory)
+
+
+router.route("/verifyemail").post(verifyEmail);
+
+router.route("/resendverification").post(resendVerificationOtp);
+
+
+
 
 export default router
