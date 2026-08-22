@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  </head>
+  <body>
+    <h1>Hello, world!</h1>
+
+<form id="registerForm" enctype="multipart/form-data">
+  <div class="form-group">
+    <label for="fullName">Full Name</label>
+    <input
+      type="text"
+      class="form-control"
+      id="fullName"
+      name="fullName"
+      required
+    >
+  </div>
+
+  <br>
+
+  <div class="form-group">
+    <label for="username">Username</label>
+    <input
+      type="text"
+      class="form-control"
+      id="username"
+      name="username"
+      required
+    >
+  </div>
+
+  <br>
+
+  <div class="form-group">
+    <label for="email">Email</label>
+    <input
+      type="email"
+      class="form-control"
+      id="email"
+      name="email"
+      required
+    >
+  </div>
+
+  <br>
+
+  <div class="form-group">
+    <label for="password">Password</label>
+    <input
+      type="password"
+      class="form-control"
+      id="password"
+      name="password"
+      required
+    >
+  </div>
+
+  <br>
+
+  <div class="form-group">
+    <label for="avatar">Avatar</label>
+    <input
+      type="file"
+      class="form-control"
+      id="avatar"
+      name="avatar"
+      accept="image/*"
+      required
+    >
+  </div>
+
+  <br>
+
+  <div class="form-group">
+    <label for="coverImage">Cover Image</label>
+    <input
+      type="file"
+      class="form-control"
+      id="coverImage"
+      name="coverImage"
+      accept="image/*"
+    >
+  </div>
+
+  <br>
+
+  <button type="submit" id="submitBtn" class="btn btn-primary">
+    Create Account
+  </button>
+
+  <p id="message"></p>
+</form>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script>
+        const form = document.getElementById("registerForm");
+const submitBtn = document.getElementById("submitBtn");
+const message = document.getElementById("message");
+
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Creating account...";
+    message.textContent = "";
+
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch(
+            "http://localhost:8000/api/v1/users/register",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+            message.textContent = "Account created successfully!";
+            message.style.color = "green";
+
+            form.reset();
+
+            // Optional: redirect to login
+            // window.location.href = "login.html";
+        } else {
+            message.textContent =
+                data.message || "Registration failed.";
+            message.style.color = "red";
+        }
+
+    } catch (error) {
+        console.error(error);
+
+        message.textContent =
+            "Unable to connect to the server.";
+        message.style.color = "red";
+
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Create Account";
+    }
+});
+    </script>
+  </body>
+</html>
