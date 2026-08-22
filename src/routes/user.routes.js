@@ -11,7 +11,8 @@ import {
     updateUserCoverImage, 
     getUserChannelProfile, 
     getWatchHistory, 
-    updateAccountDetails
+    updateAccountDetails,
+    sendOtp
 } from "../controller/user.controller.js";
 import {upload} from "../middleware/multer.middleware.js"
 import { verifyJWT } from "../middleware/auth.middleware.js";
@@ -36,6 +37,9 @@ router.route("/register").post(
 router.route("/login").post(loginUser)
 
 //secured routes
+
+router.route("/sendotp").post(sendOtp)
+
 router.route("/logout").post(verifyJWT,  logoutUser)
 router.route("/refresh-token").post(refreshAccessToken)
 router.route("/change-password").post(verifyJWT, changeCurrentPassword)

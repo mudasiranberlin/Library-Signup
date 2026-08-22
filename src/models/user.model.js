@@ -44,8 +44,13 @@ const userSchema = new Schema(
         },
         refreshToken: {
             type: String
-        }
-
+        },
+        // resetotp:{
+        //     type: String
+        // },
+        // otpExpirary:{
+        //     type: Date
+        // }
     },
     {
         timestamps: true
